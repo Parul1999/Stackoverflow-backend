@@ -32,6 +32,10 @@ public class UserBusinessService {
         String[] encryptedText = passwordCryptographyProvider.encrypt(userEntity.getPassword());
         userEntity.setSalt(encryptedText[0]);
         userEntity.setPassword(encryptedText[1]);
+        if(userDao.getUserByUsername(userEntity.getUserName())!=null ||userDao.getUserByEmail(userEntity.getEmail())!=null){
+            throw new SignUpRestrictedException("409", "User Already Exist");
+        }
+        return userDao.createUser(userEntity);
 
     }
 
@@ -52,5 +56,6 @@ public class UserBusinessService {
     public UserAuthEntity signout(String authorization) throws SignOutRestrictedException {
 
         UserAuthEntity userAuthEntity = userDao.getUserAuthByAccesstoken(authorization);
+
     }
 }
