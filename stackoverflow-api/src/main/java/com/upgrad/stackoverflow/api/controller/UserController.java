@@ -1,6 +1,5 @@
 package com.upgrad.stackoverflow.api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.upgrad.stackoverflow.api.model.SigninResponse;
 import com.upgrad.stackoverflow.api.model.SignoutResponse;
 import com.upgrad.stackoverflow.api.model.SignupUserRequest;
@@ -27,9 +26,6 @@ public class UserController {
     @Autowired
     private UserBusinessService userBusinessService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     /**
      * A controller method for user signup.
      *
@@ -55,8 +51,6 @@ public class UserController {
         final UserEntity createdUserEntity = userBusinessService.signup(userEntity);
         SignupUserResponse userResponse = new SignupUserResponse().id(createdUserEntity.getUuid()).status("REGISTERED");
         return new ResponseEntity<SignupUserResponse>(userResponse,HttpStatus.CREATED);
-
-
     }
 
     /**
@@ -67,6 +61,21 @@ public class UserController {
      * @throws AuthenticationFailedException
      */
 
+    @RequestMapping(method = RequestMethod.POST, path = "auth/login", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<SigninResponse> authentication(@RequestHeader("authorization") final String authorization) throws AuthenticationFailedException{
+        byte[] decode = Base64.getDecoder().decode(authorization.split("Basic ")[1]);
+        String decodedText = new String(decode);
+        String[] decodedArray = decodedText.split(":");
+
+        UserAuthEntity userAuthToken = userBusinessService.authenticate(decodedArray[0],decodedArray[1]);
+        UserEntity user = userAuthToken.getUser();
+
+        SigninResponse signinResponse = new SigninResponse().id(user.getUuid()).message("Successfully Signedin");
+        HttpHeaders header= new HttpHeaders();
+        header.add("access-token", userAuthToken.getAccessToken());
+        return new ResponseEntity<SigninResponse>(signinResponse, header,HttpStatus.OK);
+    }
+
     /**
      * A controller method for user signout.
      *
@@ -74,5 +83,8 @@ public class UserController {
      * @return - ResponseEntity<SignoutResponse> type object along with Http status OK.
      * @throws SignOutRestrictedException
      */
+    public ResponseEntity<SignoutResponse> signout(SignoutResponse authorization) throws SignUpRestrictedException{
+
+    }
 
 }

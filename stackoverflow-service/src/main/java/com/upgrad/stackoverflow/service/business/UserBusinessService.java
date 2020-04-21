@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
-import java.util.UUID;
 
 @Service
 public class UserBusinessService {
@@ -36,7 +35,6 @@ public class UserBusinessService {
             throw new SignUpRestrictedException("409", "User Already Exist");
         }
         return userDao.createUser(userEntity);
-
     }
 
     /**
@@ -44,9 +42,30 @@ public class UserBusinessService {
      */
     @Transactional(propagation = Propagation.REQUIRED)
     public UserAuthEntity authenticate(String username, String password) throws AuthenticationFailedException {
-
         UserEntity userEntity = userDao.getUserByUsername(username);
+        if(userEntity==null){
+            throw new AuthenticationFailedException("401","User with email not found");
+        }
+        final String encryptedPassword = passwordCryptographyProvider.encrypt(password, userEntity.getSalt());
+        if(encryptedPassword.equals(userEntity.getPassword())){
+            JwtTokenProvider jwtTokenProvider = new JwtTokenProvider(encryptedPassword);
+            UserAuthEntity userAuthToken = new UserAuthEntity();
+            userAuthToken.setUser(userEntity);
+            final ZonedDateTime now = ZonedDateTime.now();
+            final ZonedDateTime expiresAt = now.plusHours(8);
+            userAuthToken.setAccessToken(jwtTokenProvider.generateToken(userEntity.getUuid(), now, expiresAt));
+            userAuthToken.setLoginAt(now);
+            userAuthToken.setExpiresAt(expiresAt);
+            userAuthToken.setUuid(userEntity.getUuid());
 
+            userDao.createUserAuth(userAuthToken);
+//            userDao.updateUser(userEntity);
+
+            return userAuthToken;
+        }
+        else{
+            throw new AuthenticationFailedException("ATH-002", "Password Failed");
+        }
     }
 
     /**
