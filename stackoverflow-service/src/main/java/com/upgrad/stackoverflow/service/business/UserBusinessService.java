@@ -73,8 +73,13 @@ public class UserBusinessService {
      */
     @Transactional(propagation = Propagation.REQUIRED)
     public UserAuthEntity signout(String authorization) throws SignOutRestrictedException {
-
+        if(authorization==null || authorization=="EXPIRED")
+            throw new SignOutRestrictedException("400", "Already SignedOut");
         UserAuthEntity userAuthEntity = userDao.getUserAuthByAccesstoken(authorization);
+        if(userAuthEntity==null)
+            throw new SignOutRestrictedException("400", "Already SignedOut");
 
+        userAuthEntity.setAccessToken("EXPIRED");
+        return userDao.updateUserAuth(userAuthEntity);
     }
 }
