@@ -21,8 +21,15 @@ public class QuestionController {
 
     @Autowired
     private QuestionBusinessService questionBusinessService;
-
-    @PostMapping("/question/create")
+    /**
+     * A controller method to create a question.
+     *
+     * @param questionRequest - This argument contains all the attributes required to store question details in the database.
+     * @param authorization   - A field in the request header which contains the JWT token.
+     * @return - ResponseEntity<QuestionResponse> type object along with Http status CREATED.
+     * @throws AuthorizationFailedException
+     */
+    @PostMapping("/create")
     public ResponseEntity<QuestionResponse> createQuestion(@RequestBody QuestionEntity questionRequest, @RequestHeader(value="Authorization") String authorization) throws AuthorizationFailedException
     {
 
@@ -39,8 +46,8 @@ public class QuestionController {
      * @return - ResponseEntity<List<QuestionDetailsResponse>> type object along with Http status OK.
      * @throws AuthorizationFailedException
      */
-     @GetMapping("/question/all")
-    public ResponseEntity<List<QuestionDetailsResponse>> getQuestions(String authorization) throws AuthorizationFailedException
+     @GetMapping("/all")
+    public ResponseEntity<List<QuestionDetailsResponse>> getQuestions(@RequestHeader(value="Authorization") String authorization) throws AuthorizationFailedException
      {
          TypedQuery<QuestionEntity> questionList = questionBusinessService.getQuestions(authorization);
          List<QuestionEntity> resultList = questionList.getResultList();
@@ -65,7 +72,7 @@ public class QuestionController {
      * @throws AuthorizationFailedException
      * @throws InvalidQuestionException
      */
-    @PutMapping(path = "edit/{questionId}")
+    @PutMapping(path = "/edit/{questionId}")
     public ResponseEntity<QuestionEditResponse> editQuestionContent(@PathVariable("questionId") String questionId, @RequestBody QuestionEditRequest questionEditRequest, @RequestHeader("authorization") String authorization) throws AuthorizationFailedException, InvalidQuestionException
     {
         QuestionEditResponse question = new QuestionEditResponse();
