@@ -11,18 +11,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import javax.persistence.TypedQuery;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RequestMapping("/question")
 public class QuestionController {
 
     @Autowired
     private QuestionBusinessService questionBusinessService;
-
     /**
      * A controller method to create a question.
      *
@@ -31,7 +32,16 @@ public class QuestionController {
      * @return - ResponseEntity<QuestionResponse> type object along with Http status CREATED.
      * @throws AuthorizationFailedException
      */
+    @PostMapping("/create")
+    public ResponseEntity<QuestionResponse> createQuestion(@RequestBody QuestionEntity questionRequest, @RequestHeader(value="Authorization") String authorization) throws AuthorizationFailedException
+    {
 
+        QuestionEntity question = questionBusinessService.createQuestion(questionRequest, authorization);
+        QuestionResponse questionResponse = new QuestionResponse();
+        questionResponse.setId(question.getUuid());
+        questionResponse.setStatus("Question created");
+        return new ResponseEntity<>(questionResponse, HttpStatus.OK);
+    }
     /**
      * A controller method to fetch all the questions from the database.
      *
@@ -39,6 +49,21 @@ public class QuestionController {
      * @return - ResponseEntity<List<QuestionDetailsResponse>> type object along with Http status OK.
      * @throws AuthorizationFailedException
      */
+     @GetMapping("/all")
+    public ResponseEntity<List<QuestionDetailsResponse>> getQuestions(@RequestHeader(value="Authorization") String authorization) throws AuthorizationFailedException
+     {
+         TypedQuery<QuestionEntity> questionList = questionBusinessService.getQuestions(authorization);
+         List<QuestionEntity> resultList = questionList.getResultList();
+         List<QuestionDetailsResponse> responseList = resultList.stream()
+                 .map(question -> {
+                     QuestionDetailsResponse response = new QuestionDetailsResponse();
+                     response.setContent(question.getContent());
+                     response.setId(question.getUuid());
+                     return response;
+                 }).collect(Collectors.toList());
+
+         return new ResponseEntity<>(responseList, HttpStatus.OK);
+     }
 
     /**
      * A controller method to edit the question in the database.
@@ -50,6 +75,16 @@ public class QuestionController {
      * @throws AuthorizationFailedException
      * @throws InvalidQuestionException
      */
+    @PutMapping(path = "/edit/{questionId}")
+    public ResponseEntity<QuestionEditResponse> editQuestionContent(@PathVariable("questionId") String questionId, @RequestBody QuestionEditRequest questionEditRequest, @RequestHeader("authorization") String authorization) throws AuthorizationFailedException, InvalidQuestionException
+    {
+        QuestionEditResponse question = new QuestionEditResponse();
+        QuestionEntity questionContent = questionBusinessService.editQuestionContent(questionEditRequest.getContent(), questionId, authorization);
+        question.id(questionContent.getUuid());
+        question.status("QUESTION EDITED");
+        return new ResponseEntity<>(question, HttpStatus.OK);
+    }
+
 
     /**
      * A controller method to delete the question in the database.
