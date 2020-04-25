@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.TypedQuery;
+import java.time.ZonedDateTime;
 
 @Service
 public class QuestionBusinessService {
@@ -39,6 +40,7 @@ public class QuestionBusinessService {
         } else if (userAuthEntity.getLogoutAt() != null) {
             throw new AuthorizationFailedException("ATHR-002", "User is signed out. Sign in first to post a question");
         } else {
+            questionEntity.setDate(ZonedDateTime.now());
             questionEntity.setUser(userAuthEntity.getUser());
             return this.questionDao.createQuestion(questionEntity);
         }
@@ -75,11 +77,9 @@ public class QuestionBusinessService {
             if (questionEntity1 == null) {
                 throw new InvalidQuestionException("QUES-001", "Entered question uuid does not exist");
             } else if (userAuthEntity.getUser() == questionEntity1.getUser()) {
-                questionEntity.setUser(questionEntity1.getUser());
-                questionEntity.setDate(questionEntity1.getDate());
-                questionEntity.setUuid(questionEntity1.getUuid());
-                questionEntity.setId(questionEntity1.getId());
-                return this.questionDao.editQuestion(questionEntity);
+                questionEntity1.setContent(questionEntity.getContent());
+                questionEntity1.setDate(ZonedDateTime.now());
+                return this.questionDao.editQuestion(questionEntity1);
             } else {
                 throw new AuthorizationFailedException("ATHR-003", "Only the question owner can edit the question");
             }

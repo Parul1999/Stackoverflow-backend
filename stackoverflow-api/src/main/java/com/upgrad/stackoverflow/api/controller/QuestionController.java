@@ -33,10 +33,12 @@ public class QuestionController {
      * @throws AuthorizationFailedException
      */
     @PostMapping("/create")
-    public ResponseEntity<QuestionResponse> createQuestion(@RequestBody QuestionEntity questionRequest, @RequestHeader(value="Authorization") String authorization) throws AuthorizationFailedException
+    public ResponseEntity<QuestionResponse> createQuestion(@RequestBody QuestionRequest questionRequest, @RequestHeader(value="Authorization") String authorization) throws AuthorizationFailedException
     {
-
-        QuestionEntity question = questionBusinessService.createQuestion(questionRequest, authorization);
+        QuestionEntity questionEntity = new QuestionEntity();
+        questionEntity.setUuid(UUID.randomUUID().toString());
+        questionEntity.setContent(questionRequest.getContent());
+        QuestionEntity question = questionBusinessService.createQuestion(questionEntity, authorization);
         QuestionResponse questionResponse = new QuestionResponse();
         questionResponse.setId(question.getUuid());
         questionResponse.setStatus("Question created");
@@ -78,9 +80,11 @@ public class QuestionController {
     @PutMapping(path = "/edit/{questionId}")
     public ResponseEntity<QuestionEditResponse> editQuestionContent(@PathVariable("questionId") String questionId, @RequestBody QuestionEditRequest questionEditRequest, @RequestHeader("authorization") String authorization) throws AuthorizationFailedException, InvalidQuestionException
     {
+        QuestionEntity questionEntity = new QuestionEntity();
+        questionEntity.setContent(questionEditRequest.getContent());
+        QuestionEntity questionContent1 = questionBusinessService.editQuestionContent(questionEntity, questionId, authorization);
         QuestionEditResponse question = new QuestionEditResponse();
-        QuestionEntity questionContent = questionBusinessService.editQuestionContent(questionEditRequest.getContent(), questionId, authorization);
-        question.id(questionContent.getUuid());
+        question.id(questionContent1.getUuid());
         question.status("QUESTION EDITED");
         return new ResponseEntity<>(question, HttpStatus.OK);
     }
@@ -95,6 +99,12 @@ public class QuestionController {
      * @throws AuthorizationFailedException
      * @throws InvalidQuestionException
      */
+    @DeleteMapping("/delete/{questionId}")
+    public ResponseEntity<QuestionDeleteResponse> deleteQuestion(@PathVariable String questionId, @RequestHeader("authorization") String authorization) throws AuthorizationFailedException,InvalidQuestionException{
+        QuestionEntity questionEntity = questionBusinessService.deleteQuestion(questionId,authorization);
+        QuestionDeleteResponse questionDeleteResponse = new QuestionDeleteResponse().id(questionEntity.getUuid()).status("Question Deleted");
+        return new ResponseEntity<>(questionDeleteResponse,HttpStatus.OK);
+    }
 
     /**
      * A controller method to fetch all the questions posted by a specific user.
@@ -105,4 +115,19 @@ public class QuestionController {
      * @throws AuthorizationFailedException
      * @throws UserNotFoundException
      */
+    @GetMapping("/all/{userId}")
+    public ResponseEntity<List<QuestionDetailsResponse>> getAllByUserId(@PathVariable String userId, @RequestHeader("authorization") String authorization) throws AuthorizationFailedException, UserNotFoundException{
+        TypedQuery<QuestionEntity> questionList = questionBusinessService.getQuestionsByUser(userId,authorization);
+        List<QuestionEntity> resultList = questionList.getResultList();
+        List<QuestionDetailsResponse> responseList = resultList.stream()
+                .map(question -> {
+                    QuestionDetailsResponse response = new QuestionDetailsResponse();
+                    response.setContent(question.getContent());
+                    response.setId(question.getUuid());
+                    return response;
+                }).collect(Collectors.toList());
+
+        return new ResponseEntity<>(responseList, HttpStatus.OK);
+    }
+
 }
