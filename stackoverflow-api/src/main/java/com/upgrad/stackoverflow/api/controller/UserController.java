@@ -61,7 +61,7 @@ public class UserController {
      * @throws AuthenticationFailedException
      */
 
-    @RequestMapping(method = RequestMethod.POST, path = "auth/login", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @RequestMapping(method = RequestMethod.POST, path = "/signin", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<SigninResponse> authentication(@RequestHeader("authorization") final String authorization) throws AuthenticationFailedException{
         byte[] decode = Base64.getDecoder().decode(authorization.split("Basic ")[1]);
         String decodedText = new String(decode);
@@ -84,7 +84,7 @@ public class UserController {
      * @throws SignOutRestrictedException
      */
 
-    @RequestMapping(method = RequestMethod.POST, path = "auth/logout", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @RequestMapping(method = RequestMethod.POST, path = "/signout", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<SignoutResponse> signout(@RequestHeader("authorization") final String authorization) throws SignOutRestrictedException{
         UserAuthEntity userAuthEntity = userBusinessService.signout(authorization);
 
