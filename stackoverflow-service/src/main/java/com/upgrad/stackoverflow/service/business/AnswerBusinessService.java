@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.TypedQuery;
+import java.time.ZonedDateTime;
 
 @Service
 public class AnswerBusinessService {
@@ -37,16 +38,13 @@ public class AnswerBusinessService {
         if(userAuthEntity==null){
             throw new AuthorizationFailedException("401","user is not signed in");
         }
-        else if(userAuthEntity.getLogoutAt!=null){
+        else if(userAuthEntity.getLogoutAt()!=null){
             throw new AuthorizationFailedException("400","user has already signed out");
         }
         else {
-            answerEntity.setDate(ZoneDateTime.now());
+            answerEntity.setDate(ZonedDateTime.now());
             answerEntity.setUser(userAuthEntity.getUser());
             return  answerDao.createAnswer(answerEntity);
-        }
-        else{
-            return answerDao.createAnswer(answerEntity);
         }
 
     }
@@ -72,7 +70,8 @@ public class AnswerBusinessService {
         if(userAuthEntity==null){
             throw new AuthorizationFailedException("401","user is not signed in");
         }
-        else if(userAuthEntity.getLogoutAt!=null)
+        else if(userAuthEntity.getLogoutAt()!=null)
+        {
             throw new AuthorizationFailedException("400","user has already signed out");
         }
         else{
@@ -86,7 +85,7 @@ public class AnswerBusinessService {
             }
             else {
                 answerEntity1.setAns(answerEntity.getAns());
-                answerEntity1.setDate(ZoneDateTime.now());
+                answerEntity1.setDate(ZonedDateTime.now());
                 return answerDao.editAnswer(answerEntity1);
             }
         }
@@ -130,7 +129,7 @@ public class AnswerBusinessService {
             throw new AuthorizationFailedException("400", "user has already signed out");
         }
         else {
-            QuestionEntity questionEntity = this.questionDao.getQuestionByUuid(questionId);
+            QuestionEntity questionEntity = this.answerDao.getQuestionByUuid(questionId);
             if (questionEntity == null) {
                 throw new InvalidQuestionException("404", "question with this id does not exist in database");
             } else {
