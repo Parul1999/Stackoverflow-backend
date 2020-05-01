@@ -10,6 +10,8 @@ import com.upgrad.stackoverflow.service.entity.UserEntity;
 import com.upgrad.stackoverflow.service.exception.AuthenticationFailedException;
 import com.upgrad.stackoverflow.service.exception.SignOutRestrictedException;
 import com.upgrad.stackoverflow.service.exception.SignUpRestrictedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -26,6 +28,8 @@ public class UserController {
     @Autowired
     private UserBusinessService userBusinessService;
 
+    private final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
+
     /**
      * A controller method for user signup.
      *
@@ -35,6 +39,7 @@ public class UserController {
      */
     @PostMapping("/signup")
     public ResponseEntity<SignupUserResponse> signup(@RequestBody SignupUserRequest signupUserRequest) throws SignUpRestrictedException {
+        LOGGER.info("In signup method.");
         final UserEntity userEntity = new UserEntity();
         userEntity.setUuid(UUID.randomUUID().toString());
         userEntity.setFirstName(signupUserRequest.getFirstName());
@@ -48,8 +53,10 @@ public class UserController {
         userEntity.setAboutMe(signupUserRequest.getAboutMe());
         userEntity.setDob(signupUserRequest.getDob());
         userEntity.setRole("user");
+        LOGGER.info("The User Info is {}",userEntity);
         final UserEntity createdUserEntity = userBusinessService.signup(userEntity);
         SignupUserResponse userResponse = new SignupUserResponse().id(createdUserEntity.getUuid()).status("REGISTERED");
+        LOGGER.info("Signup Successful");
         return new ResponseEntity<SignupUserResponse>(userResponse,HttpStatus.CREATED);
     }
 
@@ -63,13 +70,14 @@ public class UserController {
 
     @RequestMapping(method = RequestMethod.POST, path = "/signin", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<SigninResponse> authentication(@RequestHeader("authorization") final String authorization) throws AuthenticationFailedException{
+        LOGGER.info("In Signin Controller method, Decoding username and password");
         byte[] decode = Base64.getDecoder().decode(authorization.split("Basic ")[1]);
         String decodedText = new String(decode);
         String[] decodedArray = decodedText.split(":");
-
+        LOGGER.info("Calling Business service to authenticate");
         UserAuthEntity userAuthToken = userBusinessService.authenticate(decodedArray[0],decodedArray[1]);
         UserEntity user = userAuthToken.getUser();
-
+        LOGGER.info("Signin Successful");
         SigninResponse signinResponse = new SigninResponse().id(user.getUuid()).message("Successfully Signedin");
         HttpHeaders header= new HttpHeaders();
         header.add("access-token", userAuthToken.getAccessToken());
@@ -86,10 +94,11 @@ public class UserController {
 
     @RequestMapping(method = RequestMethod.POST, path = "/signout", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<SignoutResponse> signout(@RequestHeader("authorization") final String authorization) throws SignOutRestrictedException{
+        LOGGER.info("In Signout method");
         UserAuthEntity userAuthEntity = userBusinessService.signout(authorization);
 
         UserEntity user = userAuthEntity.getUser();
-
+        LOGGER.info("Signout Successful");
         SignoutResponse signoutResponse = new SignoutResponse().id(user.getUuid()).message("Successfully Signed out");
         return new ResponseEntity<SignoutResponse>(signoutResponse,HttpStatus.OK);
 
