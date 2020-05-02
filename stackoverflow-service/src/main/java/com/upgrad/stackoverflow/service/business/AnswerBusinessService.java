@@ -36,10 +36,10 @@ public class AnswerBusinessService {
 
         UserAuthEntity userAuthEntity = userDao.getUserAuthByAccesstoken(authorization);
         if(userAuthEntity==null){
-            throw new AuthorizationFailedException("401","user is not signed in");
+            throw new AuthorizationFailedException("ATHR-001","user is not signed in");
         }
         else if(userAuthEntity.getLogoutAt()!=null){
-            throw new AuthorizationFailedException("400","user has already signed out");
+            throw new AuthorizationFailedException("ATHR-002","user has already signed out");
         }
         else {
             answerEntity.setDate(ZonedDateTime.now());
@@ -53,7 +53,7 @@ public class AnswerBusinessService {
 
         QuestionEntity questionEntity = answerDao.getQuestionByUuid(Uuid);
         if(questionEntity==null){
-            throw new InvalidQuestionException("404","question with this user id does not exist in database");
+            throw new InvalidQuestionException("QUES-001","question with this user id does not exist in database");
         }
         return questionEntity;
 
@@ -68,20 +68,20 @@ public class AnswerBusinessService {
     public AnswerEntity editAnswerContent(AnswerEntity answerEntity, String answerId, String authorization) throws AuthorizationFailedException, AnswerNotFoundException {
         UserAuthEntity userAuthEntity = userDao.getUserAuthByAccesstoken(authorization);
         if(userAuthEntity==null){
-            throw new AuthorizationFailedException("401","user is not signed in");
+            throw new AuthorizationFailedException("ATHR-001","user is not signed in");
         }
         else if(userAuthEntity.getLogoutAt()!=null)
         {
-            throw new AuthorizationFailedException("400","user has already signed out");
+            throw new AuthorizationFailedException("ATHR-002","user has already signed out");
         }
         else{
             AnswerEntity answerEntity1=answerDao.getAnswerByUuid(answerId);
             if(answerEntity1==null){
-               throw new AnswerNotFoundException("404","answer with this user id does not exist in database");
+               throw new AnswerNotFoundException("ANS-001","answer with this user id does not exist in database");
             }
             else if(answerEntity1.getUser()!=userAuthEntity.getUser())
             {
-                throw new AuthorizationFailedException("400","user has already signed out");
+                throw new AuthorizationFailedException("ATHR-003","user has already signed out");
             }
             else {
                 answerEntity1.setAns(answerEntity.getAns());
@@ -99,17 +99,17 @@ public class AnswerBusinessService {
     public AnswerEntity deleteAnswer(String answerId, String authorization) throws AuthorizationFailedException, AnswerNotFoundException {
         UserAuthEntity userAuthEntity = userDao.getUserAuthByAccesstoken(authorization);
         if(userAuthEntity == null) {
-            throw new AuthorizationFailedException("401", "user is not signed in");
+            throw new AuthorizationFailedException("ATHR-001", "user is not signed in");
         }
         else if(userAuthEntity.getLogoutAt()!=null) {
-            throw new AuthorizationFailedException("400", "user has already signed out");
+            throw new AuthorizationFailedException("ATHR-002", "user has already signed out");
         }
         else {
             AnswerEntity answerEntity = this.answerDao.getAnswerByUuid(answerId);
             if (answerEntity == null) {
-                throw new AnswerNotFoundException("404", "answer with this user id does not exist in database");
+                throw new AnswerNotFoundException("ANS-001", "answer with this user id does not exist in database");
             } else if (userAuthEntity.getUser() != answerEntity.getUser() && !userAuthEntity.getUser().getRole().equals("admin")) {
-                throw new AuthorizationFailedException("403", "only the answer owner or admin can delete the answer");
+                throw new AuthorizationFailedException("ATHR-003", "only the answer owner or admin can delete the answer");
             } else {
                 return this.answerDao.deleteAnswer(answerEntity);
             }
@@ -123,15 +123,15 @@ public class AnswerBusinessService {
     public TypedQuery<AnswerEntity> getAnswersByQuestion(String questionId, String authorization) throws AuthorizationFailedException, InvalidQuestionException {
         UserAuthEntity userAuthEntity = userDao.getUserAuthByAccesstoken(authorization);
         if(userAuthEntity==null) {
-            throw new AuthorizationFailedException("401", "user is not signed in");
+            throw new AuthorizationFailedException("ATHR-001", "user is not signed in");
         }
         else if(userAuthEntity.getLogoutAt()!=null) {
-            throw new AuthorizationFailedException("400", "user has already signed out");
+            throw new AuthorizationFailedException("ATHR-002", "user has already signed out");
         }
         else {
             QuestionEntity questionEntity = this.answerDao.getQuestionByUuid(questionId);
             if (questionEntity == null) {
-                throw new InvalidQuestionException("404", "question with this id does not exist in database");
+                throw new InvalidQuestionException("QUES-001", "question with this id does not exist in database");
             } else {
                 return this.answerDao.getAnswersByQuestion(questionEntity);
             }

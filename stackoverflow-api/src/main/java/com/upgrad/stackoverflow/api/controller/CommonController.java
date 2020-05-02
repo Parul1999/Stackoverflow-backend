@@ -29,8 +29,7 @@ public class CommonController {
      */
     @GetMapping("/userprofile/{userId}")
     public ResponseEntity<UserDetailsResponse> getUserProfile(@PathVariable("userId") String userId,
-                                                              @RequestHeader(value="Authorization") String authorization) throws AuthorizationFailedException, UserNotFoundException {
-
+                                                              @RequestHeader(value="authorization") String authorization) throws AuthorizationFailedException, UserNotFoundException {
         UserEntity user = commonBusinessService.getUser(userId, authorization);
         UserDetailsResponse userDetailsResponse = new UserDetailsResponse();
         userDetailsResponse.setUserName(user.getUserName());
